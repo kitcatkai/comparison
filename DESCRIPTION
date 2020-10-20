@@ -1,0 +1,17 @@
+Package: comparison
+Title: Generates ggplots for (1) cosine index distribution across all possible pairwise industries and (2) box and bar plots by comparing among different user-defined groups
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Kai wei",
+           family = "Tan",
+           role = c("aut", "cre"),
+           email = "kaitan@linkedin.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Generates ggplots for (1) cosine index distribution across all possible pairwise industries and (2) box and bar plots by comparing among different user-defined groups
+License: `use_mit_license()`, `use_gpl3_license()` or friends to
+    pick a license
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Imports:
