@@ -19,7 +19,7 @@ load_cosine(
 \item{industries}{Vector of the destination industries. By default, 'Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel' will be the destination industries.}
 }
 \value{
-\code{load_cosine()} returns 1 ggplot object \code{skills}
+\code{load_cosine()} returns 1 ggplot object \code{skills} and 1 stats object \code{stats}
 }
 \description{
 \code{load_cosine()} loads .csv file that contains \code{industry_group_name_a}, \code{industry_group_name_b} and \code{cosine_similarity_group} column fields.
@@ -34,10 +34,13 @@ The function returns 1 ggplot:
 library('comparison')
 
 #calling load_file function
-test <- load_cosine("./dummy_data.csv", field = 'skill_similarity')
+test <- load_cosine("./dummy_data.csv", field = 'skill_similarity', industries = c('Corporate Services','Finance', 'Hardware & Networking', 'Manufacturing', 'Software & IT Services'))
 
 #Plot histogram across all possible pairwise industries
 test$skills
+
+#Gather mean and median statistics for all pairwise combinations
+test$stats
 
 }
 \author{

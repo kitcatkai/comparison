@@ -24,8 +24,8 @@ demo <- function(df,first_order) {
                summarise(total = n_distinct(member_id)) %>% mutate(pct = total/sum(total) * 100))
 
   result_1 <- (ggplot(data=result, aes(x=reorder(industry_group_name_a, pct), y=pct, fill=first_order))
-               + geom_bar(stat = "identity", position = 'dodge') + xlab("Industry")
-               + ylab("Percentage of Members")
+               + geom_bar(stat = "identity", position = 'dodge')
+               + labs(x="Industry", y="Percentage of Members", title="Membership Across Industries (in %)")
                + coord_flip()
                + guides(fill=guide_legend(title=first_order))
                + eg_theme)
@@ -36,11 +36,12 @@ demo <- function(df,first_order) {
 
 transit <- function(df, first_order) {
 
-  df <- (df %>% filter(gap > 0))
-  result <- (ggplot(df, aes(gap, industry_group_name_b))
+  df['gap_revised'] = -df['gap']
+  df <- (df %>% filter(gap_revised > 0))
+  result <- (ggplot(df, aes(gap_revised, industry_group_name_b))
                + geom_boxplot()
                + facet_wrap(~ get(first_order))
-               + labs(y="Destination Industry", x="Months", title = "Time To Transit To An Industry ")
+               + labs(y="Destination Industry", x="Months", title = "Time To Transit To An Industry (In Months)")
                + eg_theme)
   result
 }
@@ -104,7 +105,7 @@ load_file <- function(file, group_by = NULL){
 #' @param file Path to the input file
 #' @param field Column name of the cosine index. By default, `skills_similarity` is the column field.
 #' @param industries Vector of the destination industries. By default, 'Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel' will be the destination industries.
-#' @return `load_cosine()` returns 1 ggplot object `skills`
+#' @return `load_cosine()` returns 1 ggplot object `skills` and 1 stats object `stats`
 #' @author Kai Wei Tan <kaitan@linkedin.com>
 #' @export
 #' @examples
@@ -118,6 +119,9 @@ load_file <- function(file, group_by = NULL){
 #' #Plot histogram across all possible pairwise industries
 #' test$skills
 #'
+#' #Gather mean and median statistics for all pairwise combinations
+#' test$stats
+#'
 load_cosine <- function(file, field = NULL, industries=c('Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel')){
   df <- read.csv(file)
   df <- df %>% filter(industry_group_name_b %in% industries)
@@ -129,13 +133,16 @@ load_cosine <- function(file, field = NULL, industries=c('Software & IT Services
     cosine <- field
   }
 
+  labels <- df %>% group_by(industry_group_name_a, industry_group_name_b)%>%
+    summarise(mean = mean(get(cosine)), median = median(get(cosine)), n = n())
+
   result <- ggplot(df, aes(get(cosine))) +
     geom_density() +
     eg_theme +
     labs(y = "Density", x='Similarity') + scale_x_continuous(breaks=seq(0, 1, 1)) +
     facet_grid(industry_group_name_b~industry_group_name_a, scales = "free")
 
-  return <- list("skills" = result)
+  return <- list("skills" = result, "stats" = labels)
 }
 
 
