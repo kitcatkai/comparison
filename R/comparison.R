@@ -102,7 +102,8 @@ load_file <- function(file, group_by = NULL){
 #' @import ggplot2
 #' @import dplyr
 #' @param file Path to the input file
-#' @param field Column name of the cosine index. By default, `cosine_similarity_group` is the column field.
+#' @param field Column name of the cosine index. By default, `skills_similarity` is the column field.
+#' @param industries Vector of the destination industries. By default, 'Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel' will be the destination industries.
 #' @return `load_cosine()` returns 1 ggplot object `skills`
 #' @author Kai Wei Tan <kaitan@linkedin.com>
 #' @export
@@ -112,17 +113,18 @@ load_file <- function(file, group_by = NULL){
 #' library('comparison')
 #'
 #' #calling load_file function
-#' test <- load_cosine("./dummy_data.csv", field = 'cosine_similarity_group')
+#' test <- load_cosine("./dummy_data.csv", field = 'skill_similarity', industries = c('Corporate Services','Finance', 'Hardware & Networking', 'Manufacturing', 'Software & IT Services'))
 #'
 #' #Plot histogram across all possible pairwise industries
 #' test$skills
 #'
-load_cosine <- function(file, field = NULL){
+load_cosine <- function(file, field = NULL, industries=c('Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel')){
   df <- read.csv(file)
+  df <- df %>% filter(industry_group_name_b %in% industries)
 
   cosine <- ''
   if (is.null(field)) {
-    cosine <- 'cosine_similarity_group'
+    cosine <- 'skill_similarity'
   } else {
     cosine <- field
   }

@@ -4,12 +4,19 @@
 \alias{load_cosine}
 \title{Generates cosine histogram across all possible pairwise industries}
 \usage{
-load_cosine(file, field = NULL)
+load_cosine(
+  file,
+  field = NULL,
+  industries = c("Software & IT Services", "Finance", "Health Care",
+    "Recreation & Travel")
+)
 }
 \arguments{
 \item{file}{Path to the input file}
 
-\item{field}{Column name of the cosine index. By default, \code{cosine_similarity_group} is the column field.}
+\item{field}{Column name of the cosine index. By default, \code{skills_similarity} is the column field.}
+
+\item{industries}{Vector of the destination industries. By default, 'Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel' will be the destination industries.}
 }
 \value{
 \code{load_cosine()} returns 1 ggplot object \code{skills}
@@ -27,7 +34,7 @@ The function returns 1 ggplot:
 library('comparison')
 
 #calling load_file function
-test <- load_cosine("./dummy_data.csv", field = 'cosine_similarity_group')
+test <- load_cosine("./dummy_data.csv", field = 'skill_similarity')
 
 #Plot histogram across all possible pairwise industries
 test$skills
