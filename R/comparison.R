@@ -43,7 +43,7 @@ transit <- function(df, first_order) {
   #by median and the rest of the groups will follow the order
   ordering <- df %>% filter(get(first_order) == unique(df[first_order])[order(unique(df[first_order]))[1],,]) %>%
     group_by(industry_group_name_b) %>%
-    summarise(mean = mean(gap_revised), median = median(gap_revised), n = n()) %>% arrange(desc(median))
+    summarise(mean = mean(gap_revised), median = median(gap_revised), n = n()) %>% arrange(mean)
   df$industry_group_name_b <- factor(df$industry_group_name_b, levels = unique(ordering$industry_group_name_b))
 
   result <- (ggplot(df, aes(gap_revised, industry_group_name_b))
