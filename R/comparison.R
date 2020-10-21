@@ -38,11 +38,19 @@ transit <- function(df, first_order) {
 
   df['gap_revised'] = -df['gap']
   df <- (df %>% filter(gap_revised > 0))
+
+  #sorting the first group(which will be the group in the first column of the visualisation)
+  #by median and the rest of the groups will follow the order
+  ordering <- df %>% filter(get(first_order) == unique(df[first_order])[order(unique(df[first_order]))[1],,]) %>%
+    group_by(industry_group_name_b) %>%
+    summarise(mean = mean(gap_revised), median = median(gap_revised), n = n()) %>% arrange(desc(median))
+  df$industry_group_name_b <- factor(df$industry_group_name_b, levels = unique(ordering$industry_group_name_b))
+
   result <- (ggplot(df, aes(gap_revised, industry_group_name_b))
-               + geom_boxplot()
-               + facet_wrap(~ get(first_order))
-               + labs(y="Destination Industry", x="Months", title = "Time To Transit To An Industry (In Months)")
-               + eg_theme)
+             + geom_boxplot()
+             + facet_wrap(~gender)
+             + labs(y="Destination Industry", x="Months", title = "Time To Transit To An Industry (In Months)")
+             + eg_theme)
   result
 }
 
