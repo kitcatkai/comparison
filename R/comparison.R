@@ -18,39 +18,63 @@ eg_theme <- theme(
   plot.caption = element_text(hjust = 0, size = 18)
 )
 
-demo <- function(df,first_order) {
+demo <- function(df,group) {
+  # Helper function for `load_file` to generate the distribution of user-defined groups across various industries
+  # Args:
+  #   df: dataframe for the ggplot2
+  #   group: user-defined groups
+  # Returns:
+  #   ggplot2
+
   result <- (df %>%
-               group_by(first_order = get(first_order), industry_group_name_a) %>%
-               summarise(total = n_distinct(member_id)) %>% mutate(pct = total/sum(total) * 100))
+             group_by(group = get(group), industry_group_name_a) %>%
+             summarise(total = n_distinct(member_id)) %>%
+             mutate(pct = total/sum(total) * 100))
 
-  result_1 <- (ggplot(data=result, aes(x=reorder(industry_group_name_a, pct), y=pct, fill=first_order))
-               + geom_bar(stat = "identity", position = 'dodge')
-               + labs(x="Industry", y="Percentage of Members", title="Membership Across Industries (in %)")
-               + coord_flip()
-               + guides(fill=guide_legend(title=first_order))
-               + eg_theme)
+  plot <- (ggplot(data=result, aes(x=reorder(industry_group_name_a, pct), y=pct, fill=group)) +
+           geom_bar(stat = "identity", position = 'dodge') +
+           labs(x="Industry", y="Percentage of Members", title="Membership Across Industries (in %)") +
+           coord_flip() +
+           guides(fill=guide_legend(title=group)) +
+           eg_theme)
 
-  result_1
+  plot
 }
 
 
-transit <- function(df, first_order) {
+transit <- function(df, group) {
+  # Helper function for `load_file` to generate the time it takes to transit to various industries ggplot
+  # Args:
+  #   df: dataframe for the ggplot2
+  #   group: user-defined groups
+  # Returns:
+  #   ggplot2
 
+  # Removing any negative gap and also 2 s.d data
   df['gap_revised'] = -df['gap']
-  df <- (df %>% filter(gap_revised > 0))
+  df <- (df %>%
+         filter(gap_revised >= 0) %>%
+         filter(!(gap_revised > 2*sd(gap_revised))))
 
-  #sorting the first group(which will be the group in the first column of the visualisation)
-  #by median and the rest of the groups will follow the order
-  ordering <- df %>% filter(get(first_order) == unique(df[first_order])[order(unique(df[first_order]))[1],,]) %>%
-    group_by(industry_group_name_b) %>%
-    summarise(mean = mean(gap_revised), median = median(gap_revised), n = n()) %>% arrange(mean)
+  # Sorting the first group by mean and the rest of the groups will follow the order
+  ordering <- (df %>%
+               filter(get(group) == unique(df[group])[order(unique(df[group]))[1],,]) %>%
+               group_by(industry_group_name_a, industry_group_name_b, get(group)) %>%
+               group_by(industry_group_name_b, get(group)) %>%
+               summarise(mean = mean(gap_revised), median = median(gap_revised), n = n()) %>%
+               arrange(mean))
+
   df$industry_group_name_b <- factor(df$industry_group_name_b, levels = unique(ordering$industry_group_name_b))
 
-  result <- (ggplot(df, aes(gap_revised, industry_group_name_b))
-             + geom_boxplot()
-             + facet_wrap(~gender)
-             + labs(y="Destination Industry", x="Months", title = "Time To Transit To An Industry (In Months)")
-             + eg_theme)
+  df <- (df %>%
+         group_by(industry_group_name_a, industry_group_name_b, get(group)) %>%
+         summarise(mean = mean(gap_revised)))
+
+  result <- (ggplot(df, aes(mean, industry_group_name_b)) +
+             geom_boxplot() +
+             facet_wrap(~`get(group)`, scales = "free_x") +
+             labs(y="Destination Industry", x="Months", title = "Time To Transit To An Industry (In Months)") +
+             eg_theme)
   result
 }
 
@@ -88,15 +112,15 @@ transit <- function(df, first_order) {
 load_file <- function(file, group_by = NULL){
   df <- read.csv(file)
 
-  first_order <- ''
+  group <- ''
   if (is.null(group_by)) {
-    first_order <- 'gender'
+    group <- 'gender'
   } else {
-    first_order <- group_by
+    group <- group_by
   }
 
-  result_1 <- demo(df,first_order)
-  result_2 <- transit(df,first_order)
+  result_1 <- demo(df,group)
+  result_2 <- transit(df,group)
 
   return <- list("demo" = result_1, "transit" = result_2)
   }
@@ -132,7 +156,8 @@ load_file <- function(file, group_by = NULL){
 #'
 load_cosine <- function(file, field = NULL, industries=c('Software & IT Services', 'Finance', 'Health Care', 'Recreation & Travel')){
   df <- read.csv(file)
-  df <- df %>% filter(industry_group_name_b %in% industries)
+  df <- (df %>%
+         filter(industry_group_name_b %in% industries))
 
   cosine <- ''
   if (is.null(field)) {
@@ -141,14 +166,15 @@ load_cosine <- function(file, field = NULL, industries=c('Software & IT Services
     cosine <- field
   }
 
-  labels <- df %>% group_by(industry_group_name_a, industry_group_name_b)%>%
-    summarise(mean = mean(get(cosine)), median = median(get(cosine)), n = n())
+  labels <- (df %>%
+             group_by(industry_group_name_a, industry_group_name_b)%>%
+             summarise(mean = mean(get(cosine)), median = median(get(cosine)), n = n()))
 
-  result <- ggplot(df, aes(get(cosine))) +
-    geom_density() +
-    eg_theme +
-    labs(y = "Density", x='Similarity') + scale_x_continuous(breaks=seq(0, 1, 1)) +
-    facet_grid(industry_group_name_b~industry_group_name_a, scales = "free")
+  result <- (ggplot(df, aes(get(cosine))) +
+            geom_density() +
+            eg_theme +
+            labs(y = "Density", x='Similarity') + scale_x_continuous(breaks=seq(0, 1, 1)) +
+            facet_grid(industry_group_name_b~industry_group_name_a, scales = "free"))
 
   return <- list("skills" = result, "stats" = labels)
 }
